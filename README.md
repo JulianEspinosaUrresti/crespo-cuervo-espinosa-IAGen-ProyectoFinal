@@ -1,68 +1,172 @@
-# EcoMarket — Taller Práctico #2: Sistema RAG
+# EcoMarket — Proyecto Final de IA Generativa
 
-## DAVID CRESPO - JHON JAIRO CUERVO - JULIAN ESPINOSA
+# David Crespo - Jhon Jairo Cuervo - Julian Espinosa
 
-## Arquitectura
-Python + LangChain + Sentence Transformers (`sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2`) + ChromaDB + Ollama (`llama3.2:3b`).
+**Extensión del Taller 2 — Maestría en Inteligencia Artificial**
 
-Flujo: documentos → chunks → embeddings → Chroma → búsqueda semántica → prompt con contexto → LLM → respuesta con referencias o abstención.
+## 1. Descripción del proyecto
 
-## Requisitos
-- Python 3.10 o 3.11
-- Ollama instalado y en ejecución; ejecutar `ollama pull llama3.2:3b`
-- Recursos para descargar y ejecutar el modelo de embeddings y el LLM. La primera indexación requiere conexión para descargar embeddings.
+EcoMarket es un prototipo académico de un agente de inteligencia artificial generativa orientado a la atención de clientes de un comercio electrónico de productos sostenibles.
 
-## Instalación
+El sistema integra un modelo de lenguaje de gran tamaño (LLM), recuperación aumentada por generación (RAG) y reglas de negocio implementadas en Python.
+
+Permite consultar información sobre pedidos, inventario y políticas comerciales, así como evaluar solicitudes ficticias de devolución.
+
+**Importante:** Todos los pedidos, productos, políticas, solicitudes y etiquetas utilizados son ficticios. El sistema no procesa devoluciones reales ni genera autorizaciones de envío.
+
+## 2. Objetivo
+
+Diseñar e implementar un agente de IA generativa que apoye la atención al cliente de EcoMarket, integrando información estructurada, documentación comercial y validaciones deterministas para proporcionar respuestas contextualizadas y trazables.
+
+## 3. Arquitectura de la solución
+
+El prototipo utiliza los siguientes componentes:
+
+| Componente | Tecnología | Función |
+|---|---|---|
+| Interfaz | Streamlit | Interacción con el usuario |
+| Modelo generativo | Llama 3.2 3B mediante Ollama | Generación de respuestas |
+| Recuperación documental | RAG | Consulta de información relevante |
+| Embeddings | Modelo de embeddings local | Representación vectorial de documentos |
+| Base documental | Archivos JSON y Markdown | Información de EcoMarket |
+| Lógica de negocio | Python | Validación de pedidos y devoluciones |
+| Persistencia local | SQLite | Registro y control de solicitudes |
+| Pruebas | pytest | Validación automatizada |
+
+El sistema combina respuestas generativas con reglas deterministas para evitar que decisiones sensibles, como la elegibilidad de devoluciones, dependan exclusivamente del LLM.
+
+## 4. Funcionalidades principales
+
+- Consultas sobre productos e inventario.
+- Consultas sobre estados de pedidos.
+- Recuperación de información mediante RAG.
+- Evaluación preliminar de devoluciones.
+- Exclusión de productos perecederos según las reglas del prototipo.
+- Escalamiento de casos que requieren intervención humana.
+- Prevención de solicitudes duplicadas.
+- Generación de referencias internas ficticias.
+- Visualización de trazabilidad de las respuestas.
+
+## 5. Instalación
+
+Se recomienda Python 3.11 y disponer de Ollama instalado y ejecutándose.
+
+Crear el entorno virtual:
+
 ```bash
 python -m venv .venv
-# Linux/macOS
-source .venv/bin/activate
-# Windows: .venv\Scripts\activate
-pip install -r requirements.txt
+```
+
+Activarlo en Windows PowerShell:
+
+```powershell
+.\.venv\Scripts\Activate.ps1
+```
+
+Instalar las dependencias:
+
+```bash
+python -m pip install -r requirements.txt
+```
+
+Descargar el modelo generativo:
+
+```bash
+ollama pull llama3.2:3b
+```
+
+Construir el índice documental:
+
+```bash
 python -m src.rag_ejemplo --indexar
-python -m src.rag_ejemplo --pregunta "¿Cuál es el estado del pedido ECO-1003?"
-python -m src.rag_ejemplo --pregunta "¿Puedo devolver un jabón abierto?"
-python -m unittest discover -s tests -v
 ```
-Iniciar Ollama previamente (`ollama serve`, si el servicio no está iniciado).
-La base vectorial local se genera en `.chroma/` y no se sube a GitHub.
-Para reindexar después de editar documentos: `python -m src.rag_ejemplo --indexar`.
 
-## Documentación
-- [Fase 1: componentes](docs/fase1.md)
-- [Fase 2: documentos, chunking e indexación](docs/fase2.md)
-- [Fase 3: integración, pruebas y limitaciones](docs/fase3.md)
+La primera indexación puede descargar el modelo de embeddings.
 
-## Seguridad y alcance
-No es una plataforma de producción. No hay autenticación, integración con ERP, actualización automática, observabilidad ni control de acceso por cliente. **No cargar datos personales reales.** La búsqueda vectorial no sustituye verificaciones transaccionales; los pedidos se consultan por ID exacto sobre un JSON ficticio. Las respuestas no ejecutan reembolsos.
+Ejecutar la aplicación:
 
-## Versión 2: comparación de prompts
-El prompt mejorado es el predeterminado. Para comparar:
-```bat
-python -m src.rag_ejemplo --pregunta "Cual es el estado del pedido ECO-1004?" --variante base
-python -m src.rag_ejemplo --pregunta "Cual es el estado del pedido ECO-1004?" --variante mejorado
-python -m src.evaluar --limite 12
+```bash
+streamlit run app.py
 ```
-Los resultados se guardan en `resultados/comparacion_prompts.csv`. Se requieren 24 inferencias, por lo que pueden tardar en CPU. Revisar manualmente y documentar los hallazgos en `docs/evaluacion.md`.
 
-## Actualización V3
-Consulta [mejoras y evaluación](docs/mejoras_v3.md). El prompt predeterminado ahora es `corregido`. Los resultados V2 se conservan sin alteración.
+La interfaz estará disponible normalmente en:
 
-## Resultados experimentales
+http://localhost:8501
 
-Se evaluó el sistema RAG de EcoMarket mediante 12 casos de prueba y dos variantes del prompt.
+## 6. Pruebas automatizadas
 
-| Indicador | Mejorado | Corregido |
-|---|---:|---:|
-| Respuestas correctas | 8 | 10 |
-| Respuestas parciales | 4 | 1 |
-| Respuestas incorrectas | 0 | 1 |
-| Porcentaje de respuestas correctas | 66,7 % | 83,3 % |
+Ejecutar:
 
-La versión corregida presentó una mejora de 16,7 puntos porcentuales en respuestas correctas, según la evaluación manual de los 12 casos.
+```bash
+python -m pytest -v
+```
 
-**Limitaciones identificadas:** se observó una referencia URL inventada y dificultades para comunicar el escalamiento humano ante productos dañados. Los resultados corresponden exclusivamente al conjunto de prueba utilizado y no garantizan el mismo rendimiento en producción.
+En la ejecución documentada se obtuvieron:
 
-**Evidencia:** los archivos originales y evaluados de V2 y V3 están disponibles en la carpeta `resultados/`.
+**14 pruebas aprobadas, 0 fallidas.**
 
-**Conclusión:** el prototipo demuestra la integración funcional de LangChain, ChromaDB, embeddings multilingües y Llama 3.2 para responder consultas de EcoMarket mediante recuperación de información contextual.
+Las pruebas incluyen validaciones de pedidos, contexto documental, productos perecederos, devoluciones, fechas, escalamiento y duplicados.
+
+Evidencia:
+
+[resultados/pytest_resultado.txt](resultados/pytest_resultado.txt)
+
+Estos resultados corresponden a las pruebas automatizadas incluidas en el repositorio y no representan una validación integral de calidad del modelo generativo.
+
+## 7. Ejemplos de demostración
+
+**Consulta sobre pedidos**
+
+¿Qué debo hacer si mi pedido de EcoMarket está retrasado?
+
+**Consulta documental**
+
+¿Cuál es la política de devoluciones de EcoMarket?
+
+**Solicitud de devolución**
+
+Quiero devolver el producto del pedido ECO-1012.
+
+**Producto excluido**
+
+Quiero devolver el pedido ECO-1003.
+
+Los identificadores anteriores corresponden exclusivamente a datos ficticios de evaluación.
+
+## 8. Seguridad y uso responsable
+
+El sistema incorpora las siguientes consideraciones:
+
+- Separación entre generación de lenguaje y reglas deterministas.
+- Validación humana para decisiones que requieren autorización.
+- Prevención de solicitudes duplicadas.
+- Uso exclusivo de datos ficticios.
+- Restricciones para evitar autorizaciones de devolución no verificadas.
+- Trazabilidad de las rutas de procesamiento.
+
+## 9. Limitaciones
+
+El prototipo presenta las siguientes limitaciones:
+
+- Depende de la disponibilidad local de Ollama.
+- La calidad de las respuestas generativas depende del modelo y del contexto recuperado.
+- El conjunto de documentos y pedidos es reducido y ficticio.
+- No existe integración con sistemas reales de comercio electrónico.
+- No se han establecido métricas de rendimiento en producción.
+- Las solicitudes de devolución requieren validación humana.
+
+## 10. Conclusiones
+
+El proyecto demuestra la integración de modelos de lenguaje, recuperación documental y lógica determinista en un caso práctico de comercio electrónico.
+
+La arquitectura permite separar consultas informativas de operaciones sujetas a reglas comerciales, mejorando la trazabilidad y reduciendo el riesgo de decisiones generativas no verificadas.
+
+El resultado constituye un prototipo académico funcional, no una plataforma comercial lista para producción.
+
+## 11. Repositorio
+
+El código, la documentación y las pruebas están disponibles en:
+
+https://github.com/JulianEspinosaUrresti/crespo-cuervo-espinosa-IAGen-ProyectoFinal
+
+El proyecto conserva la continuidad académica con el Taller 2.
