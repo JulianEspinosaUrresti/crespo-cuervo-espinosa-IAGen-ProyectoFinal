@@ -22,6 +22,48 @@ La métrica utilizada fue:
 
 Las respuestas parciales no se contabilizaron como correctas.
 
+### Diseño y justificación de las variantes de prompts
+
+El sistema EcoMarket utiliza ingeniería de prompts para orientar las respuestas del modelo Llama 3.2 3B, ejecutado localmente mediante Ollama y LangChain.
+
+Las variantes comparten un prompt de sistema que establece el rol de agente de atención al cliente, el uso exclusivo del contexto documental y los pedidos verificados, la prohibición de inventar información y la obligación de reconocer cuando los datos son insuficientes.
+
+**Variante base**
+
+Incorpora la instrucción adicional de responder de forma amable y breve. Se utiliza como referencia para comparar el efecto de incorporar reglas más específicas.
+
+**Variante mejorada**
+
+Añade instrucciones explícitas para gestionar pedidos retrasados, distinguir devoluciones ordinarias de reclamaciones por daños, evitar solicitar identificadores innecesarios y abstenerse cuando no exista información verificable.
+
+Esta variante aplica principios de especificidad, restricciones y contextualización propios de la ingeniería de prompts.
+
+**Variante corregida**
+
+Organiza las instrucciones adicionales en seis reglas prioritarias para situaciones concretas: pedidos retrasados, devoluciones, productos dañados, tarifas de envío, referencias documentales y consultas generales.
+
+Su diseño busca reducir ambigüedades mediante instrucciones estructuradas, comportamientos esperados y restricciones explícitas.
+
+**Estrategia de prompting**
+
+Las tres variantes utilizan instrucciones de rol, contexto documental y restricciones de respuesta. No incorporan ejemplos completos de entrada y salida dentro del prompt; por tanto, su diseño corresponde principalmente a una estrategia *zero-shot* contextualizada y no a *few-shot prompting*.
+
+El contexto se construye mediante recuperación documental con ChromaDB, mientras que los pedidos se consultan por identificador exacto.
+
+La temperatura del modelo se configura en cero para favorecer respuestas más consistentes, aunque esto no garantiza determinismo absoluto ni elimina las alucinaciones.
+
+**Interpretación experimental**
+
+En V2, las variantes base y mejorada obtuvieron un 66,7 % de respuestas correctas.
+
+En V3, la variante mejorada obtuvo un 66,7 % y la corregida alcanzó un 83,3 %, equivalente a una diferencia de 16,7 puntos porcentuales.
+
+Sin embargo, la variante corregida presentó una respuesta incorrecta, por lo que el aumento de respuestas correctas no demuestra una eliminación del riesgo de alucinaciones.
+
+Los resultados sugieren que estructurar instrucciones puede mejorar determinados comportamientos del agente, pero su efectividad depende de la consulta, el contexto recuperado y la capacidad del modelo para cumplir las restricciones.
+
+Dado el tamaño reducido de la muestra y las limitaciones metodológicas documentadas, no se atribuye causalidad concluyente a los cambios del prompt.
+
 ## 3. Resultados experimentales
 
 | Evaluación | Variante | Correctas | Parciales | Incorrectas | Porcentaje correcto |
