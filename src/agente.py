@@ -5,12 +5,48 @@ from .rag_ejemplo import consultar
 from .devoluciones import verificar_elegibilidad, registrar_solicitud
 
 def detectar_intencion(texto):
-    # Regla conservadora de respaldo para evitar operaciones no autorizadas.
-    t=texto.casefold()
-    if any(x in t for x in ("devol", "retorn", "reembols", "cambiar producto")):
+    """Distingue consultas informativas de solicitudes operativas."""
+    t = texto.casefold().strip()
+
+    # Consultas informativas sobre políticas: usar RAG.
+    consultas_politica = (
+        "politica de devoluciones",
+        "política de devoluciones",
+        "politica de devolución",
+        "política de devolución",
+        "condiciones de devolucion",
+        "condiciones de devolución",
+        "requisitos para devolver",
+        "plazo de devolucion",
+        "plazo de devolución",
+    )
+
+    # Una pregunta general no inicia una devolución.
+    if any(x in t for x in consultas_politica):
+        if not re.search(
+            r"\b(quiero|solicito|necesito|deseo)\s+"
+            r"(devolver|retornar|cambiar|un reembolso)",
+            t
+        ):
+            return "rag"
+
+    # Solicitudes operativas explícitas.
+    if any(x in t for x in (
+        "quiero devolver",
+        "solicito devolucion",
+        "solicito devolución",
+        "necesito devolver",
+        "deseo devolver",
+        "quiero retornar",
+        "quiero un reembolso",
+        "quiero cambiar producto",
+    )):
         return "devolucion"
-    if re.search(r"\bECO-\d{4}\b",texto.upper()):
+
+    # Consultas sobre pedidos.
+    if re.search(r"\bECO-\d{4}\b", texto.upper()):
         return "pedido"
+
     return "rag"
 
 def clasificar_con_llm(texto):
@@ -35,7 +71,9 @@ def responder(texto, usar_llm_router=True, **datos):
         try:
             sugerencia=clasificar_con_llm(texto)
             # El clasificador no puede anular una intención explícita de devolución.
-            if ruta != "devolucion": ruta=sugerencia
+            # Preservar las rutas identificadas explícitamente.
+            if ruta == "rag" and sugerencia in {"rag", "pedido"}:
+                ruta = sugerencia
         except Exception:
             pass
     if ruta != "devolucion":
