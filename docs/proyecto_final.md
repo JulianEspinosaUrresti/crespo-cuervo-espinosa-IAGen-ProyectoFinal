@@ -189,12 +189,43 @@ Se proponen las siguientes mejoras, que no forman parte de las funcionalidades v
 
 ---
 
-## Conclusiones
+## Validación funcional final del agente EcoMarket
 
-El proyecto EcoMarket demuestra cómo integrar un modelo de lenguaje basado en Transformers, recuperación aumentada por generación y herramientas deterministas para resolver consultas de comercio electrónico.
+Se realizaron pruebas funcionales del módulo de devoluciones mediante la interfaz Streamlit, utilizando datos ficticios.
 
-Su principal decisión arquitectónica consiste en separar la generación de lenguaje de las operaciones sujetas a reglas comerciales.
+### Prueba 1. Validación de fecha futura
 
-Las 14 pruebas automatizadas aprobadas proporcionan evidencia de funcionamiento para los casos implementados.
+Se ingresó una solicitud de devolución del pedido ECO-1012 con fecha real de entrega 2026-11-03.
 
-El proyecto constituye un prototipo académico reproducible y extensible. Para su utilización comercial serían necesarias validaciones adicionales de seguridad, precisión, desempeño y escalabilidad.
+El sistema detectó que la fecha era futura respecto a la fecha de ejecución y rechazó la pre-elegibilidad.
+
+**Resultado observado:** `requiere_datos`. El registro fue bloqueado.
+
+### Prueba 2. Evaluación preliminar de devolución
+
+Se consultó la devolución del pedido ECO-1012, correspondiente a una bolsa de tela reutilizable, indicando una fecha real de entrega de 2026-10-30, producto sin uso y empaque original.
+
+**Resultado observado:** `pre_elegible`, con un plazo calculado de 2 días y pendiente de validación humana.
+
+### Prueba 3. Control de solicitudes duplicadas
+
+Al intentar registrar nuevamente la solicitud ficticia del pedido ECO-1012, el sistema identificó que ya existía un registro.
+
+**Resultado observado:** `duplicado`.
+
+Se conservó la referencia ficticia `SIMULADA-DEV-ECO-1012`.
+
+### Análisis
+
+Las pruebas muestran que el prototipo incorpora controles deterministas para impedir el uso de fechas futuras, evaluar condiciones preliminares y evitar registros duplicados.
+
+Estos controles complementan el uso del modelo generativo, sin delegarle decisiones comerciales definitivas.
+
+Las pruebas no constituyen una validación para producción.
+
+### Evidencias
+
+- [Fecha futura ingresada](../evidencias/01_fecha_futura.png)
+- [Bloqueo de fecha futura](../evidencias/02_fecha_futura_bloqueada.png)
+- [Datos de devolución](../evidencias/03_devolucion_datos.png)
+- [Control de duplicados](../evidencias/04_solicitud_duplicada.png)
